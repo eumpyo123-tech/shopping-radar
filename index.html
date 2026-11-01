@@ -217,7 +217,26 @@ h1 { white-space: nowrap; }
     return it._h || (it._h = norm([it.ch, it.t, it.b, it.chain, it.kind, it.rate, it.card,
       (it.pb || []).join(" "), (it.w || []).map(function (x) { return x.n; }).join(" ")].join(" ")));
   }
-  function matchQ(it) { var h = hay(it); return words().every(function (w) { return h.indexOf(norm(w)) >= 0; }); }
+  // 지점·백화점·종류 이름인지 (전관 행사에서 브랜드 검색어와 구분하려고)
+  var PLACES = null;
+  function isPlace(xn) {
+    if (!PLACES) {
+      PLACES = [].concat(D.chains || [], D.kinds || [], ["사은", "백화점", "아울렛", "몰"]);
+      Object.keys(D.branches || {}).forEach(function (c) { PLACES = PLACES.concat(D.branches[c]); });
+      PLACES = PLACES.map(norm);
+    }
+    return PLACES.some(function (p) { return p.indexOf(xn) >= 0 || xn.indexOf(p) >= 0 && p.length > 1; });
+  }
+  function matchQ(it) {
+    var h = hay(it);
+    return words().every(function (w) { var xn = norm(w);
+      // 전관 행사는 브랜드 검색어면 통과 (지점·종류 검색어는 그대로 걸러짐)
+      return h.indexOf(xn) >= 0 || (it.all && !isPlace(xn)); });
+  }
+  function allHit(it) {
+    var h = hay(it);
+    return it.all && words().some(function (w) { var xn = norm(w); return h.indexOf(xn) < 0 && !isPlace(xn); });
+  }
   function pool(name) {
     if (name === "nike") return D.nike;
     return D.events.filter(function (e) { return (e.kind === "사은") === (name === "gifts"); });
@@ -281,6 +300,8 @@ h1 { white-space: nowrap; }
       '<div class="t">' + hl(it.t) + '</div>' +
       '<div class="sub">' + esc(it.p || "") + (gift && it.card ? (it.p ? ' · ' : '') + esc(it.card) : '') + '</div>' +
       (hits.length ? '<div class="hitb">참여 브랜드: ' + hits.map(hl).join(", ") + '</div>' : '') +
+      (it.all ? '<div class="hitb">' + (allHit(it) ? '<span class="hit">' + esc(q.trim()) + '</span> 포함 · ' : '') +
+        '전관 행사 (대부분 브랜드 참여, 일부 제외될 수 있음)</div>' : '') +
       '</button>';
     if (isOpen) {
       h += '<div class="more-info"><div class="links">' + it.w.map(function (x) {
