@@ -106,6 +106,10 @@ main { padding-block: 0 48px; }
 .rate { grid-row: 1 / span 3; align-self: center; font: 21px/1.05 var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rate.text { font: 600 13px/1.25 var(--f-body); }
 .hit { color: var(--accent); font-weight: 700; }
+.udot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.sum.read .t { font-weight: 500; color: var(--muted); }
+.fchip.unread[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.fchip.markall { color: var(--muted); }
 .when { font-size: 11px; color: var(--muted); opacity: .8; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
 .more-info { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -208,7 +212,24 @@ h1 { white-space: nowrap; }
   var tab = "events", q = "", shown = 60, PAGE = 60, open = {};
   var F = { events: { chain: "전체", kind: "전체", branch: "", newonly: false },
             gifts: { chain: "전체", branch: "", newonly: false },
-            nike: { region: "전체", newonly: false } };
+            nike: { region: "전체", newonly: false, unread: false } };
+  // 나이키 채널 읽음 표시: 이 휴대폰(브라우저)에만 저장. 글 주소 → 읽은 시각
+  var READ = null;
+  try { READ = JSON.parse(localStorage.getItem("nikeRead") || "null"); } catch (e) {}
+  function saveRead() { try { localStorage.setItem("nikeRead", JSON.stringify(READ)); } catch (e) {} }
+  function isRead(it) { return !!(READ && READ[it.u]); }
+  function markRead(u) { if (READ && u && !READ[u]) { READ[u] = Date.now(); saveRead(); } }
+  function initRead() {
+    var first = !READ; READ = READ || {};
+    var keep = {};
+    D.nike.forEach(function (it) {
+      if (READ[it.u]) keep[it.u] = READ[it.u];
+      // 처음 쓰는 사람은 하루 지난 글은 읽은 것으로 시작 (안 읽음이 수백 개로 쌓이지 않게)
+      else if (first && Date.now() - it.ts > DAY) keep[it.u] = 1;
+    });
+    READ = keep; saveRead();
+  }
+  function unreadCount() { return D.nike.filter(function (it) { return !isRead(it); }).length; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
@@ -256,7 +277,7 @@ h1 { white-space: nowrap; }
     return pool(name).filter(function (it) {
       if (!matchQ(it)) return false;
       if (f.newonly && !(name === "nike" ? Date.now() - it.ts < DAY : it.new && Date.now() - it.new * 1000 < DAY)) return false;
-      if (name === "nike") return f.region === "전체" || it.region === f.region;
+      if (name === "nike") return (f.region === "전체" || it.region === f.region) && !(f.unread && isRead(it));
       if (f.chain !== "전체" && it.chain !== f.chain) return false;
       if (f.kind && f.kind !== "전체" && it.kind !== f.kind) return false;
       if (!ignoreBranch && f.branch && !it.w.some(function (x) { return x.n === f.branch; })) return false;
@@ -344,13 +365,15 @@ h1 { white-space: nowrap; }
   function itemHTML(it, i) {
     var id = tab + i, isOpen = !!open[it.k || it.u], nw = isNew(it), h;
     if (tab === "nike") {
-      h = '<button class="sum" data-id="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
-        '<div class="where"><span class="dot"></span><span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
+      var rd = isRead(it);
+      h = '<button class="sum' + (rd ? ' read' : ' unread') + '" data-id="' + esc(it.u) + '" data-read="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
+        '<div class="where"><span class="dot"></span>' + (rd ? '' : '<span class="udot" title="안 읽음"></span>') +
+        '<span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
         (it.region === "지방" ? ' · 지방' : '') + '</span></div>' +
         '<div class="side">' + (nw ? '<span class="tag new">NEW</span>' : '') + '<span class="sub">' + ago(it.ts) + '</span></div>' +
         '<div class="t">' + hl(it.t) + '</div>' + whenHTML(it) + '</button>' +
         (isOpen ? '<div class="more-info">' + (it.b ? '<p class="body">' + hl(it.b) + '</p>' : '') +
-          '<div class="links"><a class="go" target="_blank" rel="noopener" href="' + esc(it.u) + '">채널에서 보기</a></div></div>' : '');
+          '<div class="links"><a class="go" target="_blank" rel="noopener" data-read="' + esc(it.u) + '" href="' + esc(it.u) + '">채널에서 보기</a></div></div>' : '');
       return '<div class="item">' + h + '</div>';
     }
     var hits = pbHits(it), gift = tab === "gifts";
@@ -388,6 +411,11 @@ h1 { white-space: nowrap; }
       if (tab === "events") c2 = ["전체"].concat(D.kinds || ["세일", "팝업", "행사"]).map(function (o) { return chip("kind", o, o === "전체" ? "모든 종류" : o, f.kind === o); }).join("");
     }
     c1 += chip("newonly", "1", "NEW만", f.newonly, "newonly");
+    if (tab === "nike") {
+      var un = unreadCount();
+      c1 += chip("unread", "1", "안 읽음 " + un, f.unread, "unread") +
+        (un ? '<button class="fchip markall" data-markall="1">모두 읽음</button>' : '');
+    }
     $("chips1").innerHTML = c1; $("chips2").innerHTML = c2; $("chips2").hidden = !c2;
     var sel = $("branch");
     if (tab === "nike") { sel.hidden = true; }
@@ -431,7 +459,8 @@ h1 { white-space: nowrap; }
   document.querySelector(".bar").addEventListener("click", function (e) {
     var b = e.target.closest(".fchip"); if (!b) return;
     var f = F[tab];
-    if (b.dataset.k === "newonly") f.newonly = !f.newonly; else f[b.dataset.k] = b.dataset.v;
+    if (b.dataset.markall) { D.nike.forEach(function (it) { if (!READ[it.u]) READ[it.u] = Date.now(); }); saveRead(); render(); return; }
+    if (b.dataset.k === "newonly" || b.dataset.k === "unread") f[b.dataset.k] = !f[b.dataset.k]; else f[b.dataset.k] = b.dataset.v;
     shown = PAGE; render();
   });
   $("branch").addEventListener("change", function (e) { F[tab].branch = e.target.value; shown = PAGE; render(); });
@@ -444,7 +473,11 @@ h1 { white-space: nowrap; }
       if (it) { q = ""; $("q").value = ""; $("clear").hidden = true; F.gifts.chain = it.chain; F.gifts.branch = it.w.length === 1 ? it.w[0].n : ""; F.gifts.newonly = false; setTab("gifts"); }
       return;
     }
+    // 나이키 글은 펼치거나 '채널에서 보기'를 누르면 읽음으로
+    var rl = e.target.closest("[data-read]");
+    if (rl && rl.tagName === "A") { markRead(rl.dataset.read); setTimeout(render, 0); return; }
     var b = e.target.closest(".sum"); if (!b) return;
+    if (b.dataset.read) markRead(b.dataset.read);
     var id = b.dataset.id; open[id] = !open[id]; render();
   });
   $("more").addEventListener("click", function () { shown += PAGE; render(); });
@@ -496,6 +529,7 @@ h1 { white-space: nowrap; }
   .catch(function () { return fetch("data.json?" + Date.now()).then(function (r) { return r.json(); }); })
   .then(function (d) {
     D = d; $("updated").textContent = d.updated.slice(5).replace("-", "/") + " 갱신";
+    initRead();
     render();
     if (h === "alerts") showAlerts(true);
   }).catch(function () {
