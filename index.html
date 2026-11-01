@@ -111,6 +111,7 @@ main { padding-block: 0 48px; }
 
 .tr { display: flex; align-items: center; gap: 10px; }
 .bell { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
+.help { font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
 .bell[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
 .alerts { padding-block: 16px 48px; display: flex; flex-direction: column; gap: 12px; }
 .alerts h2 { margin: 0; font: 22px/1.2 var(--f-display); }
@@ -137,6 +138,7 @@ main { padding-block: 0 48px; }
       <h1>쇼핑 <span>레이더</span></h1>
       <div class="tr">
         <span class="updated" id="updated">불러오는 중…</span>
+        <a class="help" href="guide.html">사용법</a>
         <button class="bell" id="bell" aria-pressed="false">알림 받기</button>
       </div>
     </div>
@@ -162,7 +164,7 @@ main { padding-block: 0 48px; }
     <li>알림을 끄려면 ntfy 앱에서 그 항목을 길게 눌러 <b>구독 취소</b>(Unsubscribe). 잠깐 조용히 하려면 항목 안의 종 모양으로 <b>음소거</b>.</li>
   </ol>
   <div class="list" id="topics"></div>
-  <p class="note">알림을 누르면 해당 글이나 이 사이트로 바로 이동해요.</p>
+  <p class="note">알림을 누르면 해당 글이나 이 사이트로 바로 이동해요. 음소거·구독 취소 등 자세한 방법은 <a href="guide.html#onoff">사용법</a>을 보세요.</p>
 </section>
 <main class="wrap" id="mainview">
   <div class="bar">
