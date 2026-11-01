@@ -92,6 +92,7 @@ main { padding-block: 0 48px; }
 .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 .dot.현대 { background: var(--hyundai); } .dot.롯데 { background: var(--lotte); } .dot.신세계 { background: var(--shinsegae); } .dot.스타필드 { background: var(--starfield); }
 .dot.갤러리아 { background: var(--galleria); } .dot.AK { background: var(--ak); }
+.dot.신세계아울렛 { background: var(--shinsegae); box-shadow: inset 0 0 0 2px var(--surface), 0 0 0 1px var(--shinsegae); }
 .chain { font-weight: 600; color: var(--fg); }
 .side { grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 5px; background: var(--chip); color: var(--muted); white-space: nowrap; }
@@ -185,7 +186,7 @@ main { padding-block: 0 48px; }
 <script>
 (function () {
   var D = { nike: [], events: [] };
-  var CHAINS = ["현대", "롯데", "신세계", "갤러리아", "AK", "스타필드"];
+  var CHAINS = ["현대", "롯데", "신세계", "신세계아울렛", "갤러리아", "AK", "스타필드"];
   var tab = "events", q = "", shown = 60, PAGE = 60, open = {};
   var F = { events: { chain: "전체", kind: "전체", branch: "", newonly: false },
             gifts: { chain: "전체", branch: "", newonly: false },
