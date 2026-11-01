@@ -65,17 +65,28 @@ h1 span { color: var(--accent); }
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
 .tab { border: 0; background: none; padding: 9px 4px 10px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
 .tab .n { font-weight: 500; font-variant-numeric: tabular-nums; margin-left: 3px; font-size: 12px; }
-.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab[aria-selected="true"] { color: var(--accent); background: var(--accent-soft); border-bottom-color: var(--accent); font-weight: 700; }
 
 .bar { display: flex; flex-direction: column; gap: 8px; padding-block: 12px 10px; }
 .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 0 2px; }
 .chips::-webkit-scrollbar { display: none; }
 .fchip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-.fchip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+/* 고른 버튼: 주황(백화점은 그 백화점 색)으로 채우고 ✓. 기본값 '전체'는 테두리만 */
+.fchip[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); font-weight: 700; }
+.fchip[aria-pressed="true"]::before { content: "✓ "; }
+.fchip.all[aria-pressed="true"] { background: var(--surface); color: var(--fg); border-color: var(--fg); font-weight: 600; }
+.fchip.all[aria-pressed="true"]::before { content: none; }
+.fchip[data-k="chain"][aria-pressed="true"] { --c: var(--accent); background: var(--c); border-color: var(--c); }
+.fchip[data-v="현대"], .fchip[data-v="현대아울렛"] { --c: var(--hyundai); }
+.fchip[data-v="롯데"], .fchip[data-v="롯데아울렛"] { --c: var(--lotte); }
+.fchip[data-v="신세계"], .fchip[data-v="신세계아울렛"] { --c: var(--shinsegae); }
+.fchip[data-v="갤러리아"] { --c: var(--galleria); } .fchip[data-v="AK"] { --c: var(--ak); } .fchip[data-v="스타필드"] { --c: var(--starfield); }
 .fchip.newonly[aria-pressed="true"] { background: var(--new); border-color: var(--new); color: var(--surface); }
+.row2 select.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.count b { color: var(--accent); font-weight: 700; }
 .row2 { display: flex; gap: 8px; align-items: center; }
 .row2 select { flex: 1; min-width: 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
-.count { font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.count { font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
 
 main { padding-block: 0 48px; }
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -405,6 +416,7 @@ h1 { white-space: nowrap; }
   }
 
   function chip(key, val, label, on, cls) {
+    if (val === "전체") cls = (cls ? cls + " " : "") + "all";
     return '<button class="fchip' + (cls ? ' ' + cls : '') + '" data-k="' + key + '" data-v="' + esc(val) + '" aria-pressed="' + on + '">' + label + '</button>';
   }
   function renderBar() {
@@ -439,7 +451,23 @@ h1 { white-space: nowrap; }
       sel.innerHTML = '<option value="">모든 지점</option>' + opts.map(function (o) {
         return '<option value="' + esc(o.v) + '"' + (o.v === f.branch ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join("");
       sel.hidden = false;
+      sel.classList.toggle("on", !!f.branch);
     }
+  }
+  // 목록 위 건수 줄에 지금 보는 조건을 글자로
+  function filterText() {
+    var f = F[tab], p = [];
+    if (tab === "nike") {
+      if (f.region !== "전체") p.push(f.region);
+      if (f.show) p.push(f.show === "new" ? "새 글" : "놓친 글");
+    } else {
+      if (f.chain !== "전체") p.push(f.chain);
+      if (f.kind && f.kind !== "전체") p.push(f.kind);
+      if (f.branch) p.push(f.branch);
+      if (f.newonly) p.push("NEW");
+    }
+    if (q.trim()) p.push("'" + q.trim() + "'");
+    return p.length ? '<b>' + p.map(esc).join(" · ") + '</b> · ' : '';
   }
   function render() {
     ["events", "gifts", "nike"].forEach(function (n) {
@@ -448,7 +476,7 @@ h1 { white-space: nowrap; }
     });
     renderBar();
     var list = rows(tab);
-    $("count").textContent = list.length + "건";
+    $("count").innerHTML = filterText() + list.length + "건";
     $("list").innerHTML = list.slice(0, shown).map(itemHTML).join("") ||
       '<div class="empty">' + (q ? "'" + esc(q) + "'에 맞는 소식이 없어요." : "조건에 맞는 소식이 없어요.") + '</div>';
     $("more").hidden = list.length <= shown;
