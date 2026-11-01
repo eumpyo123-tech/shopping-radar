@@ -109,6 +109,22 @@ main { padding-block: 0 48px; }
 .brands { font-size: 13px; color: var(--muted); line-height: 1.7; }
 .brands b { font-weight: 600; color: var(--fg); margin-right: 4px; }
 
+.tr { display: flex; align-items: center; gap: 10px; }
+.bell { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
+.bell[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.alerts { padding-block: 16px 48px; display: flex; flex-direction: column; gap: 12px; }
+.alerts h2 { margin: 0; font: 22px/1.2 var(--f-display); }
+.lead { margin: 0; color: var(--muted); }
+.lead b { color: var(--fg); }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.steps .go { margin: 2px 4px 0 0; }
+.topic { padding: 14px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); }
+.topic:first-child { border-top: 0; }
+.topic h3 { margin: 0; font-size: 16px; }
+.topic p { margin: 0; font-size: 13px; color: var(--muted); }
+.topic code { font-size: 13px; background: var(--chip); padding: 2px 8px; border-radius: 6px; align-self: flex-start; overflow-wrap: anywhere; }
+.topic .links button.go { cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; }
+.note { margin: 0; font-size: 13px; color: var(--muted); }
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
 .more { margin: 14px auto 0; display: block; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 22px; cursor: pointer; font-weight: 600; }
 @media (max-width: 420px) { .sum.gift { grid-template-columns: 56px 1fr auto; } .sum.gift + .more-info { padding-left: 14px; } }
@@ -119,7 +135,10 @@ main { padding-block: 0 48px; }
   <div class="wrap head">
     <div class="title-row">
       <h1>쇼핑 <span>레이더</span></h1>
-      <span class="updated" id="updated">불러오는 중…</span>
+      <div class="tr">
+        <span class="updated" id="updated">불러오는 중…</span>
+        <button class="bell" id="bell" aria-pressed="false">알림 받기</button>
+      </div>
     </div>
     <div class="search">
       <input id="q" type="search" placeholder="브랜드·지점·행사 검색 (예: 나이키, 잠실)" autocomplete="off" enterkeyhint="search">
@@ -132,7 +151,20 @@ main { padding-block: 0 48px; }
     </nav>
   </div>
 </header>
-<main class="wrap">
+<section class="wrap alerts" id="alerts" hidden>
+  <h2>알림 받기</h2>
+  <p class="lead">무료 앱 <b>ntfy</b>에서 받고 싶은 알림만 구독하세요. <b>구독하면 켜지고, 구독을 취소하면 꺼져요.</b> 가입은 필요 없어요.</p>
+  <ol class="steps">
+    <li>ntfy 앱 설치:
+      <a class="go" target="_blank" rel="noopener" href="https://play.google.com/store/apps/details?id=io.heckel.ntfy">안드로이드</a>
+      <a class="go" target="_blank" rel="noopener" href="https://apps.apple.com/app/ntfy/id1625396347">아이폰</a></li>
+    <li>아래에서 원하는 알림의 <b>앱에서 구독</b>을 누르세요. 앱이 안 열리면 <b>이름 복사</b> → ntfy 앱의 <b>+</b> → 붙여넣기 → Subscribe.</li>
+    <li>알림을 끄려면 ntfy 앱에서 그 항목을 길게 눌러 <b>구독 취소</b>(Unsubscribe). 잠깐 조용히 하려면 항목 안의 종 모양으로 <b>음소거</b>.</li>
+  </ol>
+  <div class="list" id="topics"></div>
+  <p class="note">알림을 누르면 해당 글이나 이 사이트로 바로 이동해요.</p>
+</section>
+<main class="wrap" id="mainview">
   <div class="bar">
     <div class="chips" id="chips1"></div>
     <div class="chips" id="chips2"></div>
@@ -299,6 +331,36 @@ main { padding-block: 0 48px; }
   });
   $("clear").addEventListener("click", function () { q = ""; $("q").value = ""; this.hidden = true; render(); $("q").focus(); });
 
+  // 알림 받기 화면
+  function renderTopics() {
+    $("topics").innerHTML = (D.topics || []).map(function (t) {
+      var host = t.server.replace(/^https?:\/\//, "");
+      return '<div class="topic"><h3>' + esc(t.name) + '</h3><p>' + esc(t.desc) + '</p>' +
+        '<code>' + esc(t.topic) + '</code><div class="links">' +
+        '<a class="go" href="ntfy://' + esc(host + "/" + t.topic) + '">앱에서 구독</a>' +
+        '<button class="go" data-copy="' + esc(t.topic) + '">이름 복사</button>' +
+        '<a class="go" target="_blank" rel="noopener" href="' + esc(t.server + "/" + t.topic) + '">웹에서 보기</a></div></div>';
+    }).join("") || '<div class="empty">알림 정보를 불러오는 중이에요.</div>';
+  }
+  function showAlerts(on) {
+    $("alerts").hidden = !on; $("mainview").hidden = on;
+    document.querySelector(".tabs").hidden = on; document.querySelector(".search").hidden = on;
+    $("bell").setAttribute("aria-pressed", on); $("bell").textContent = on ? "목록으로" : "알림 받기";
+    try { history.replaceState(null, "", "#" + (on ? "alerts" : tab)); } catch (e) {}
+    if (on) renderTopics();
+    window.scrollTo(0, 0);
+  }
+  $("bell").addEventListener("click", function () { showAlerts($("alerts").hidden); });
+  $("topics").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-copy]"); if (!b) return;
+    var txt = b.dataset.copy, done = function () { b.textContent = "복사됨"; setTimeout(function () { b.textContent = "이름 복사"; }, 1500); };
+    try { navigator.clipboard.writeText(txt).then(done, function () { prompt0(b, txt); }); } catch (x) { prompt0(b, txt); }
+  });
+  function prompt0(b, txt) {  // 복사가 안 되면 이름을 선택해 둠
+    var code = b.closest(".topic").querySelector("code"), r = document.createRange();
+    r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
   var h = (location.hash || "").slice(1), saved = null;
   try { saved = localStorage.getItem("tab"); } catch (e) {}
   tab = ["events", "gifts", "nike"].indexOf(h) >= 0 ? h : (["events", "gifts", "nike"].indexOf(saved) >= 0 ? saved : "events");
@@ -306,6 +368,7 @@ main { padding-block: 0 48px; }
   fetch("data.json?" + Date.now()).then(function (r) { return r.json(); }).then(function (d) {
     D = d; $("updated").textContent = d.updated.slice(5).replace("-", "/") + " 갱신";
     render();
+    if (h === "alerts") showAlerts(true);
   }).catch(function () {
     $("updated").textContent = "";
     $("list").innerHTML = '<div class="empty">내용을 불러오지 못했어요. 잠시 뒤 새로고침 해주세요.</div>';
