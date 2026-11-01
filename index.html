@@ -106,9 +106,15 @@ main { padding-block: 0 48px; }
 .rate { grid-row: 1 / span 3; align-self: center; font: 21px/1.05 var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rate.text { font: 600 13px/1.25 var(--f-body); }
 .hit { color: var(--accent); font-weight: 700; }
-.udot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
-.sum.read .t { font-weight: 500; color: var(--muted); }
-.fchip.unread[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+/* 나이키 채널 상태: 새 글 / 놓친 글 / 읽음 */
+.tag.st.new { background: var(--accent-soft); color: var(--accent); }
+.tag.st.missed { background: none; border: 1px solid var(--muted); color: var(--muted); }
+.tag.st.read { background: none; color: var(--muted); opacity: .7; font-weight: 500; padding: 0; }
+.sum.st-new .t { font-weight: 700; }
+.sum.st-missed .t { font-weight: 600; }
+.sum.st-read .t { font-weight: 500; color: var(--muted); }
+.fchip.st-new[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.fchip.st-missed[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--surface); }
 .fchip.markall { color: var(--muted); }
 .when { font-size: 11px; color: var(--muted); opacity: .8; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
@@ -212,7 +218,7 @@ h1 { white-space: nowrap; }
   var tab = "events", q = "", shown = 60, PAGE = 60, open = {};
   var F = { events: { chain: "전체", kind: "전체", branch: "", newonly: false },
             gifts: { chain: "전체", branch: "", newonly: false },
-            nike: { region: "전체", newonly: false, unread: false } };
+            nike: { region: "전체", show: "" } };  // show: "" 전체 / "new" 새 글만 / "missed" 놓친 글만
   // 나이키 채널 읽음 표시: 이 휴대폰(브라우저)에만 저장. 글 주소 → 읽은 시각
   var READ = null;
   try { READ = JSON.parse(localStorage.getItem("nikeRead") || "null"); } catch (e) {}
@@ -220,16 +226,15 @@ h1 { white-space: nowrap; }
   function isRead(it) { return !!(READ && READ[it.u]); }
   function markRead(u) { if (READ && u && !READ[u]) { READ[u] = Date.now(); saveRead(); } }
   function initRead() {
-    var first = !READ; READ = READ || {};
-    var keep = {};
-    D.nike.forEach(function (it) {
-      if (READ[it.u]) keep[it.u] = READ[it.u];
-      // 처음 쓰는 사람은 하루 지난 글은 읽은 것으로 시작 (안 읽음이 수백 개로 쌓이지 않게)
-      else if (first && Date.now() - it.ts > DAY) keep[it.u] = 1;
-    });
+    READ = READ || {};
+    var keep = {};  // 지금 목록에 있는 글만 남김 (기록이 계속 쌓이지 않게)
+    D.nike.forEach(function (it) { if (READ[it.u]) keep[it.u] = READ[it.u]; });
     READ = keep; saveRead();
   }
-  function unreadCount() { return D.nike.filter(function (it) { return !isRead(it); }).length; }
+  // 새 글: 24시간 안 + 안 읽음 / 놓친 글: 24시간 지남 + 안 읽음 / 읽음: 펼쳤거나 채널에서 봄
+  function state(it) { return isRead(it) ? "read" : Date.now() - it.ts < DAY ? "new" : "missed"; }
+  var STATE_LABEL = { "new": "새 글", missed: "놓친 글", read: "읽음" };
+  function countState(s) { return D.nike.filter(function (it) { return state(it) === s; }).length; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
@@ -276,8 +281,8 @@ h1 { white-space: nowrap; }
     var f = F[name];
     return pool(name).filter(function (it) {
       if (!matchQ(it)) return false;
-      if (f.newonly && !(name === "nike" ? Date.now() - it.ts < DAY : it.new && Date.now() - it.new * 1000 < DAY)) return false;
-      if (name === "nike") return (f.region === "전체" || it.region === f.region) && !(f.unread && isRead(it));
+      if (name === "nike") return (f.region === "전체" || it.region === f.region) && (!f.show || state(it) === f.show);
+      if (f.newonly && !(it.new && Date.now() - it.new * 1000 < DAY)) return false;
       if (f.chain !== "전체" && it.chain !== f.chain) return false;
       if (f.kind && f.kind !== "전체" && it.kind !== f.kind) return false;
       if (!ignoreBranch && f.branch && !it.w.some(function (x) { return x.n === f.branch; })) return false;
@@ -365,12 +370,12 @@ h1 { white-space: nowrap; }
   function itemHTML(it, i) {
     var id = tab + i, isOpen = !!open[it.k || it.u], nw = isNew(it), h;
     if (tab === "nike") {
-      var rd = isRead(it);
-      h = '<button class="sum' + (rd ? ' read' : ' unread') + '" data-id="' + esc(it.u) + '" data-read="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
-        '<div class="where"><span class="dot"></span>' + (rd ? '' : '<span class="udot" title="안 읽음"></span>') +
+      var st = state(it);
+      h = '<button class="sum st-' + st + '" data-id="' + esc(it.u) + '" data-read="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
+        '<div class="where"><span class="dot"></span>' +
         '<span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
         (it.region === "지방" ? ' · 지방' : '') + '</span></div>' +
-        '<div class="side">' + (nw ? '<span class="tag new">NEW</span>' : '') + '<span class="sub">' + ago(it.ts) + '</span></div>' +
+        '<div class="side"><span class="tag st ' + st + '">' + STATE_LABEL[st] + '</span><span class="sub">' + ago(it.ts) + '</span></div>' +
         '<div class="t">' + hl(it.t) + '</div>' + whenHTML(it) + '</button>' +
         (isOpen ? '<div class="more-info">' + (it.b ? '<p class="body">' + hl(it.b) + '</p>' : '') +
           '<div class="links"><a class="go" target="_blank" rel="noopener" data-read="' + esc(it.u) + '" href="' + esc(it.u) + '">채널에서 보기</a></div></div>' : '');
@@ -410,12 +415,12 @@ h1 { white-space: nowrap; }
       c1 = ["전체"].concat(D.chains || CHAINS).map(function (o) { return chip("chain", o, o, f.chain === o); }).join("");
       if (tab === "events") c2 = ["전체"].concat(D.kinds || ["세일", "팝업", "행사"]).map(function (o) { return chip("kind", o, o === "전체" ? "모든 종류" : o, f.kind === o); }).join("");
     }
-    c1 += chip("newonly", "1", "NEW만", f.newonly, "newonly");
     if (tab === "nike") {
-      var un = unreadCount();
-      c1 += chip("unread", "1", "안 읽음 " + un, f.unread, "unread") +
-        (un ? '<button class="fchip markall" data-markall="1">모두 읽음</button>' : '');
-    }
+      var nn = countState("new"), nm = countState("missed");
+      c1 += chip("show", "new", "새 글 " + nn, f.show === "new", "st-new") +
+        chip("show", "missed", "놓친 글 " + nm, f.show === "missed", "st-missed") +
+        (nn + nm ? '<button class="fchip markall" data-markall="1">모두 확인</button>' : '');
+    } else c1 += chip("newonly", "1", "NEW만", f.newonly, "newonly");
     $("chips1").innerHTML = c1; $("chips2").innerHTML = c2; $("chips2").hidden = !c2;
     var sel = $("branch");
     if (tab === "nike") { sel.hidden = true; }
@@ -460,7 +465,9 @@ h1 { white-space: nowrap; }
     var b = e.target.closest(".fchip"); if (!b) return;
     var f = F[tab];
     if (b.dataset.markall) { D.nike.forEach(function (it) { if (!READ[it.u]) READ[it.u] = Date.now(); }); saveRead(); render(); return; }
-    if (b.dataset.k === "newonly" || b.dataset.k === "unread") f[b.dataset.k] = !f[b.dataset.k]; else f[b.dataset.k] = b.dataset.v;
+    if (b.dataset.k === "newonly") f.newonly = !f.newonly;
+    else if (b.dataset.k === "show") f.show = f.show === b.dataset.v ? "" : b.dataset.v;  // 한 번 더 누르면 해제
+    else f[b.dataset.k] = b.dataset.v;
     shown = PAGE; render();
   });
   $("branch").addEventListener("change", function (e) { F[tab].branch = e.target.value; shown = PAGE; render(); });
