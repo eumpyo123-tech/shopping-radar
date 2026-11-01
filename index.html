@@ -235,7 +235,8 @@ h1 { white-space: nowrap; }
   }
   function allHit(it) {
     var h = hay(it);
-    return it.all && words().some(function (w) { var xn = norm(w); return h.indexOf(xn) < 0 && !isPlace(xn); });
+    if (!it.all) return [];
+    return words().filter(function (w) { var xn = norm(w); return h.indexOf(xn) < 0 && !isPlace(xn); });
   }
   function pool(name) {
     if (name === "nike") return D.nike;
@@ -300,7 +301,7 @@ h1 { white-space: nowrap; }
       '<div class="t">' + hl(it.t) + '</div>' +
       '<div class="sub">' + esc(it.p || "") + (gift && it.card ? (it.p ? ' · ' : '') + esc(it.card) : '') + '</div>' +
       (hits.length ? '<div class="hitb">참여 브랜드: ' + hits.map(hl).join(", ") + '</div>' : '') +
-      (it.all ? '<div class="hitb">' + (allHit(it) ? '<span class="hit">' + esc(q.trim()) + '</span> 포함 · ' : '') +
+      (it.all ? '<div class="hitb">' + (allHit(it).length ? allHit(it).map(function (w) { return '<span class="hit">' + esc(w) + '</span>'; }).join(", ") + ' 포함 · ' : '') +
         '전관 행사 (대부분 브랜드 참여, 일부 제외될 수 있음)</div>' : '') +
       '</button>';
     if (isOpen) {
