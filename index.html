@@ -135,6 +135,13 @@ main { padding-block: 0 48px; }
 .note { margin: 0; font-size: 13px; color: var(--muted); }
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
 .more { margin: 14px auto 0; display: block; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 22px; cursor: pointer; font-weight: 600; }
+h1 { white-space: nowrap; }
+@media (max-width: 420px) {
+  h1 { font-size: 21px; }
+  .tr { gap: 8px; }
+  .updated { font-size: 11px; }
+  .bell { padding: 4px 10px; }
+}
 @media (max-width: 420px) { .sum.gift { grid-template-columns: 56px 1fr auto; } .sum.gift + .more-info { padding-left: 14px; } }
 </style>
 </head>
