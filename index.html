@@ -299,12 +299,19 @@ h1 { white-space: nowrap; }
     var sel = $("branch");
     if (tab === "nike") { sel.hidden = true; }
     else {
-      var set = {};
-      rows(tab, true).forEach(function (it) { it.w.forEach(function (x) { set[(f.chain === "전체" ? it.chain + " " : "") + x.n] = x.n; }); });
-      var keys = Object.keys(set).sort(function (a, b) { return a.localeCompare(b, "ko"); });
-      if (f.branch && !keys.some(function (k) { return set[k] === f.branch; })) f.branch = "";
-      sel.innerHTML = '<option value="">모든 지점</option>' + keys.map(function (k) {
-        return '<option value="' + esc(set[k]) + '"' + (set[k] === f.branch ? ' selected' : '') + '>' + esc(k) + '</option>'; }).join("");
+      // 지점 목록은 행사가 없어도 전부 보여주고, 지금 조건에서 몇 건인지 붙임
+      var cnt = {};
+      rows(tab, true).forEach(function (it) { it.w.forEach(function (x) { var k = it.chain + "|" + x.n; cnt[k] = (cnt[k] || 0) + 1; }); });
+      var all = D.branches || {}, opts = [];
+      (f.chain === "전체" ? (D.chains || CHAINS) : [f.chain]).forEach(function (c) {
+        var list = (all[c] || []).slice();
+        Object.keys(cnt).forEach(function (k) { var p = k.split("|"); if (p[0] === c && list.indexOf(p[1]) < 0) list.push(p[1]); });
+        list.sort(function (a, b) { return a.localeCompare(b, "ko"); }).forEach(function (n) {
+          opts.push({ v: n, label: (f.chain === "전체" ? c + " " : "") + n + " (" + (cnt[c + "|" + n] || 0) + ")" });
+        });
+      });
+      sel.innerHTML = '<option value="">모든 지점</option>' + opts.map(function (o) {
+        return '<option value="' + esc(o.v) + '"' + (o.v === f.branch ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join("");
       sel.hidden = false;
     }
   }
