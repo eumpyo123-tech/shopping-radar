@@ -71,17 +71,17 @@ h1 span { color: var(--accent); }
 .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 0 2px; }
 .chips::-webkit-scrollbar { display: none; }
 .fchip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-/* 고른 버튼: 주황(백화점은 그 백화점 색)으로 채우고 ✓. 기본값 '전체'는 테두리만 */
+/* 고른 버튼: 주황(백화점은 그 백화점 색, '전체'는 진한 색)으로 채우고 ✓ */
 .fchip[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); font-weight: 700; }
 .fchip[aria-pressed="true"]::before { content: "✓ "; }
-.fchip.all[aria-pressed="true"] { background: var(--surface); color: var(--fg); border-color: var(--fg); font-weight: 600; }
-.fchip.all[aria-pressed="true"]::before { content: none; }
+.fchip.all[aria-pressed="true"] { background: var(--fg); color: var(--surface); border-color: var(--fg); }
 .fchip[data-k="chain"][aria-pressed="true"] { --c: var(--accent); background: var(--c); border-color: var(--c); }
 .fchip[data-v="현대"], .fchip[data-v="현대아울렛"] { --c: var(--hyundai); }
 .fchip[data-v="롯데"], .fchip[data-v="롯데아울렛"] { --c: var(--lotte); }
 .fchip[data-v="신세계"], .fchip[data-v="신세계아울렛"] { --c: var(--shinsegae); }
 .fchip[data-v="갤러리아"] { --c: var(--galleria); } .fchip[data-v="AK"] { --c: var(--ak); } .fchip[data-v="스타필드"] { --c: var(--starfield); }
 .fchip.newonly[aria-pressed="true"] { background: var(--new); border-color: var(--new); color: var(--surface); }
+.fchip.all.all[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--surface); }
 .row2 select.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .count b { color: var(--accent); font-weight: 700; }
 .row2 { display: flex; gap: 8px; align-items: center; }
