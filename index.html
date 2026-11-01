@@ -115,6 +115,14 @@ main { padding-block: 0 48px; }
 .go::after { content: "›"; color: var(--muted); }
 .brands { font-size: 13px; color: var(--muted); line-height: 1.7; }
 .brands b { font-weight: 600; color: var(--fg); margin-right: 4px; }
+.giftbtn { align-self: flex-start; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+.rel { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+.rel h4 { margin: 0; font-size: 13px; font-weight: 700; }
+.rel .none { font-size: 13px; color: var(--muted); }
+.rg { display: grid; grid-template-columns: 64px 1fr; gap: 2px 10px; text-decoration: none; color: inherit; }
+.rg .rate { grid-row: 1 / span 3; font-size: 17px; }
+.rg .t { font-size: 14px; font-weight: 600; }
+.rg + .rg { border-top: 1px solid var(--line); padding-top: 10px; }
 
 .tr { display: flex; align-items: center; gap: 10px; }
 .bell { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
@@ -280,6 +288,47 @@ h1 { white-space: nowrap; }
     return m ? "https://m.starfield.co.kr/" + m[1] + "/event/main/" + m[2] : u;
   }
 
+  // 행사 글과 같은 지점에서, 그 글의 브랜드에 해당하는 사은을 찾음
+  var giftOpen = {};
+  function relatedGifts(it) {
+    var br = it.w.map(function (x) { return x.n; });
+    var brands = (it.pb || []).slice();
+    // 검색어가 브랜드면 그 브랜드로 좁힘 (예: 여러 브랜드 세일에서 '나이키'만)
+    var w = words().map(norm).filter(function (x) { return !isPlace(x); });
+    var narrow = brands.filter(function (b) { return w.some(function (x) { return norm(b).indexOf(x) >= 0; }); });
+    if (narrow.length) brands = narrow;
+    var bn = brands.map(norm), out = [], total = 0;
+    D.events.forEach(function (g) {
+      if (g.kind !== "사은" || g.chain !== it.chain || !g.w.some(function (x) { return br.indexOf(x.n) >= 0; })) return;
+      total++;
+      var tn = norm(g.t), hit = [];
+      (g.pb || []).forEach(function (b) { if (bn.indexOf(norm(b)) >= 0) hit.push(b); });
+      brands.forEach(function (b) { if (tn.indexOf(norm(b)) >= 0 && hit.indexOf(b) < 0) hit.push(b); });
+      if (hit.length) out.push({ g: g, why: "참여 브랜드: " + hit.join(", ") });
+      else if (g.all) out.push({ g: g, why: "전관 행사 (일부 브랜드 제외될 수 있음)" });
+    });
+    out.sort(function (a, b) { return (a.g.all ? 1 : 0) - (b.g.all ? 1 : 0); });
+    return { list: out, brands: brands, total: total, br: br };
+  }
+  function relatedHTML(it) {
+    var r = relatedGifts(it);
+    var head = r.brands.length ? r.brands.slice(0, 4).join(", ") + (r.brands.length > 4 ? " 외 " + (r.brands.length - 4) : "") : "이 글";
+    var h = '<div class="rel"><h4>' + esc(it.chain) + ' ' + esc(r.br.length > 2 ? r.br.slice(0, 2).join("·") + " 외" : r.br.join("·")) +
+      ' · ' + esc(head) + ' 사은 ' + r.list.length + '건</h4>';
+    if (!r.brands.length) h += '<div class="none">이 글에서 브랜드를 찾지 못해서 전관 행사만 보여줘요.</div>';
+    if (!r.list.length) h += '<div class="none">해당하는 사은행사가 없어요.</div>';
+    h += r.list.map(function (x) {
+      var g = x.g, gb = g.w.filter(function (y) { return r.br.indexOf(y.n) >= 0; });
+      return '<a class="rg" target="_blank" rel="noopener" href="' + esc(link(gb[0].u)) + '">' +
+        '<div class="rate' + (/%/.test(g.rate) ? '' : ' text') + '">' + esc(g.rate) + '</div>' +
+        '<div class="t">' + esc(g.t) + '</div>' +
+        '<div class="sub">' + esc(gb.map(function (y) { return y.n; }).join("·")) + (g.p ? ' · ' + esc(g.p) : '') + (g.card ? ' · ' + esc(g.card) : '') + '</div>' +
+        '<div class="hitb">' + esc(x.why) + '</div></a>';
+    }).join("");
+    if (r.total) h += '<div class="links"><button class="go" data-gotab="' + esc(it.k) + '">이 지점 사은 전체 ' + r.total + '건 보기</button></div>';
+    return h + '</div>';
+  }
+
   function itemHTML(it, i) {
     var id = tab + i, isOpen = !!open[it.k || it.u], nw = isNew(it), h;
     if (tab === "nike") {
@@ -308,6 +357,8 @@ h1 { white-space: nowrap; }
       h += '<div class="more-info"><div class="links">' + it.w.map(function (x) {
           return '<a class="go" target="_blank" rel="noopener" href="' + esc(link(x.u)) + '">' + esc(it.chain + " " + x.n) + '</a>'; }).join("") + '</div>' +
         (it.pb && it.pb.length ? '<div class="brands"><b>참여 브랜드 ' + it.pb.length + '</b>' + it.pb.map(hl).join(", ") + '</div>' : '') +
+        (gift ? '' : '<button class="giftbtn" data-gifts="' + esc(it.k) + '" aria-expanded="' + !!giftOpen[it.k] + '">' +
+          (giftOpen[it.k] ? '사은 접기' : '이 지점 사은 보기') + '</button>' + (giftOpen[it.k] ? relatedHTML(it) : '')) +
         '</div>';
     }
     return '<div class="item">' + h + '</div>';
@@ -373,6 +424,14 @@ h1 { white-space: nowrap; }
   });
   $("branch").addEventListener("change", function (e) { F[tab].branch = e.target.value; shown = PAGE; render(); });
   $("list").addEventListener("click", function (e) {
+    var gb = e.target.closest("[data-gifts]");
+    if (gb) { giftOpen[gb.dataset.gifts] = !giftOpen[gb.dataset.gifts]; render(); return; }
+    var gt = e.target.closest("[data-gotab]");
+    if (gt) {  // 사은 탭으로 넘어가서 같은 백화점·지점으로 걸러 보여줌 (검색어는 그대로)
+      var it = D.events.filter(function (x) { return x.k === gt.dataset.gotab; })[0];
+      if (it) { F.gifts.chain = it.chain; F.gifts.branch = it.w.length === 1 ? it.w[0].n : ""; F.gifts.newonly = false; setTab("gifts"); }
+      return;
+    }
     var b = e.target.closest(".sum"); if (!b) return;
     var id = b.dataset.id; open[id] = !open[id]; render();
   });
