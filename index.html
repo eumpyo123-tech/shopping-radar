@@ -125,7 +125,7 @@ main { padding-block: 0 48px; }
 .sum.st-missed .t { font-weight: 600; }
 .sum.st-read .t { font-weight: 500; color: var(--muted); }
 .fchip.st-new[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
-.fchip.st-missed[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--surface); }
+.fchip.st-missed[aria-pressed="true"] { background: var(--muted); border-color: var(--muted); color: var(--surface); }
 .fchip.markall { color: var(--muted); }
 .when { font-size: 11px; color: var(--muted); opacity: .8; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
@@ -429,7 +429,9 @@ h1 { white-space: nowrap; }
     }
     if (tab === "nike") {
       var nn = countState("new"), nm = countState("missed");
-      c1 += chip("show", "new", "새 글 " + nn, f.show === "new", "st-new") +
+      // 둘째 줄: 글 상태 (지역 '전체'와 헷갈리지 않게 줄을 나눔)
+      c2 = chip("show", "", "모든 글", !f.show, "all") +
+        chip("show", "new", "새 글 " + nn, f.show === "new", "st-new") +
         chip("show", "missed", "놓친 글 " + nm, f.show === "missed", "st-missed") +
         (nn + nm ? '<button class="fchip markall" data-markall="1">모두 확인</button>' : '');
     } else c1 += chip("newonly", "1", "NEW만", f.newonly, "newonly");
