@@ -106,6 +106,7 @@ main { padding-block: 0 48px; }
 .rate { grid-row: 1 / span 3; align-self: center; font: 21px/1.05 var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rate.text { font: 600 13px/1.25 var(--f-body); }
 .hit { color: var(--accent); font-weight: 700; }
+.when { font-size: 11px; color: var(--muted); opacity: .8; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
 .more-info { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .sum.gift + .more-info { padding-left: 88px; }
@@ -275,6 +276,17 @@ h1 { white-space: nowrap; }
     if (h < 24) return Math.round(h) + "시간 전";
     return (d.getMonth() + 1) + "/" + d.getDate();
   }
+  // 글 끝에 작게 붙이는 시각: 나이키 채널은 게시 시각, 백화점 글은 처음 발견한 시각
+  function stamp(ts) {
+    var d = new Date(ts), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return (d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + "." : "") +
+      p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function whenHTML(it) {
+    if (tab === "nike") return it.ts ? '<div class="when">게시 ' + stamp(it.ts) + '</div>' : '';
+    if (it.f) return '<div class="when">발견 ' + stamp(it.f * 1000) + '</div>';
+    return '<div class="when">발견 11.01 이전</div>';  // 발견 시각을 기록하기 전부터 있던 글
+  }
   function branches(it) {
     var n = it.w.map(function (x) { return x.n; });
     return n.length > 3 ? n.slice(0, 3).join("·") + " 외 " + (n.length - 3) : n.join("·");
@@ -336,7 +348,7 @@ h1 { white-space: nowrap; }
         '<div class="where"><span class="dot"></span><span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
         (it.region === "지방" ? ' · 지방' : '') + '</span></div>' +
         '<div class="side">' + (nw ? '<span class="tag new">NEW</span>' : '') + '<span class="sub">' + ago(it.ts) + '</span></div>' +
-        '<div class="t">' + hl(it.t) + '</div></button>' +
+        '<div class="t">' + hl(it.t) + '</div>' + whenHTML(it) + '</button>' +
         (isOpen ? '<div class="more-info">' + (it.b ? '<p class="body">' + hl(it.b) + '</p>' : '') +
           '<div class="links"><a class="go" target="_blank" rel="noopener" href="' + esc(it.u) + '">채널에서 보기</a></div></div>' : '');
       return '<div class="item">' + h + '</div>';
@@ -352,7 +364,7 @@ h1 { white-space: nowrap; }
       (hits.length ? '<div class="hitb">참여 브랜드: ' + hits.map(hl).join(", ") + '</div>' : '') +
       (it.all ? '<div class="hitb">' + (allHit(it).length ? allHit(it).map(function (w) { return '<span class="hit">' + esc(w) + '</span>'; }).join(", ") + ' 포함 · ' : '') +
         '전관 행사 (대부분 브랜드 참여, 일부 제외될 수 있음)</div>' : '') +
-      '</button>';
+      whenHTML(it) + '</button>';
     if (isOpen) {
       h += '<div class="more-info"><div class="links">' + it.w.map(function (x) {
           return '<a class="go" target="_blank" rel="noopener" href="' + esc(link(x.u)) + '">' + esc(it.chain + " " + x.n) + '</a>'; }).join("") + '</div>' +
