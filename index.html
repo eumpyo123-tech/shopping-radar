@@ -252,6 +252,14 @@ h1 { white-space: nowrap; }
     return n.length > 3 ? n.slice(0, 3).join("·") + " 외 " + (n.length - 3) : n.join("·");
   }
 
+  // 스타필드는 휴대폰에서 PC 주소를 열면 모바일 첫 화면으로 튕겨서, 휴대폰이면 모바일 상세 주소로 바꿔 엶
+  var PHONE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  function link(u) {
+    if (!PHONE) return u;
+    var m = /^https:\/\/www\.starfield\.co\.kr\/([a-z]+)\/eventBenefit\/events\/(\w+)/.exec(u || "");
+    return m ? "https://m.starfield.co.kr/" + m[1] + "/event/main/" + m[2] : u;
+  }
+
   function itemHTML(it, i) {
     var id = tab + i, isOpen = !!open[it.k || it.u], nw = isNew(it), h;
     if (tab === "nike") {
@@ -276,7 +284,7 @@ h1 { white-space: nowrap; }
       '</button>';
     if (isOpen) {
       h += '<div class="more-info"><div class="links">' + it.w.map(function (x) {
-          return '<a class="go" target="_blank" rel="noopener" href="' + esc(x.u) + '">' + esc(it.chain + " " + x.n) + '</a>'; }).join("") + '</div>' +
+          return '<a class="go" target="_blank" rel="noopener" href="' + esc(link(x.u)) + '">' + esc(it.chain + " " + x.n) + '</a>'; }).join("") + '</div>' +
         (it.pb && it.pb.length ? '<div class="brands"><b>참여 브랜드 ' + it.pb.length + '</b>' + it.pb.map(hl).join(", ") + '</div>' : '') +
         '</div>';
     }
