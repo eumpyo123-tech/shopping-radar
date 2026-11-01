@@ -21,6 +21,7 @@
   --chip: #eef0f3;
   --new: #0d7a48;
   --hyundai: #1d6b55; --lotte: #c4122f; --shinsegae: #444; --starfield: #5a3fb0;
+  --galleria: #a07a2c; --ak: #1f5fbf;
   --f-display: "Black Han Sans", "IBM Plex Sans KR", sans-serif;
   --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color-scheme: light;
@@ -29,11 +30,13 @@
   --bg: #111317; --surface: #191c21; --fg: #eceef1; --muted: #a0a7b2; --faint: #6c737e; --line: #2a2f37;
   --accent: #ff8a3d; --accent-soft: #33231a; --chip: #252930; --new: #4cc38a;
   --hyundai: #4fb393; --lotte: #ff5a6e; --shinsegae: #bdbdbd; --starfield: #a68cff;
+  --galleria: #d8b26a; --ak: #6fa2ff;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #111317; --surface: #191c21; --fg: #eceef1; --muted: #a0a7b2; --faint: #6c737e; --line: #2a2f37;
   --accent: #ff8a3d; --accent-soft: #33231a; --chip: #252930; --new: #4cc38a;
   --hyundai: #4fb393; --lotte: #ff5a6e; --shinsegae: #bdbdbd; --starfield: #a68cff;
+  --galleria: #d8b26a; --ak: #6fa2ff;
   color-scheme: dark; }
 
 * { box-sizing: border-box; }
@@ -88,6 +91,7 @@ main { padding-block: 0 48px; }
 .where .b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 .dot.현대 { background: var(--hyundai); } .dot.롯데 { background: var(--lotte); } .dot.신세계 { background: var(--shinsegae); } .dot.스타필드 { background: var(--starfield); }
+.dot.갤러리아 { background: var(--galleria); } .dot.AK { background: var(--ak); }
 .chain { font-weight: 600; color: var(--fg); }
 .side { grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 5px; background: var(--chip); color: var(--muted); white-space: nowrap; }
@@ -181,7 +185,7 @@ main { padding-block: 0 48px; }
 <script>
 (function () {
   var D = { nike: [], events: [] };
-  var CHAINS = ["현대", "롯데", "신세계", "스타필드"];
+  var CHAINS = ["현대", "롯데", "신세계", "갤러리아", "AK", "스타필드"];
   var tab = "events", q = "", shown = 60, PAGE = 60, open = {};
   var F = { events: { chain: "전체", kind: "전체", branch: "", newonly: false },
             gifts: { chain: "전체", branch: "", newonly: false },
