@@ -427,9 +427,9 @@ h1 { white-space: nowrap; }
     var gb = e.target.closest("[data-gifts]");
     if (gb) { giftOpen[gb.dataset.gifts] = !giftOpen[gb.dataset.gifts]; render(); return; }
     var gt = e.target.closest("[data-gotab]");
-    if (gt) {  // 사은 탭으로 넘어가서 같은 백화점·지점으로 걸러 보여줌 (검색어는 그대로)
+    if (gt) {  // 사은 탭으로 넘어가서 같은 백화점·지점의 사은을 전부 보여줌
       var it = D.events.filter(function (x) { return x.k === gt.dataset.gotab; })[0];
-      if (it) { F.gifts.chain = it.chain; F.gifts.branch = it.w.length === 1 ? it.w[0].n : ""; F.gifts.newonly = false; setTab("gifts"); }
+      if (it) { q = ""; $("q").value = ""; $("clear").hidden = true; F.gifts.chain = it.chain; F.gifts.branch = it.w.length === 1 ? it.w[0].n : ""; F.gifts.newonly = false; setTab("gifts"); }
       return;
     }
     var b = e.target.closest(".sum"); if (!b) return;
