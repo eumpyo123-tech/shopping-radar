@@ -387,11 +387,11 @@ h1 { white-space: nowrap; }
       h = '<button class="sum st-' + st + '" data-id="' + esc(it.u) + '" data-read="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
         '<div class="where"><span class="dot"></span>' +
         '<span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
-        (it.region === "지방" ? ' · 지방' : '') + '</span></div>' +
+        (it.region === "지방" ? ' · 지방' : '') + (it.src === "naver" ? ' · 네이버' : '') + '</span></div>' +
         '<div class="side"><span class="tag st ' + st + '">' + STATE_LABEL[st] + '</span><span class="sub">' + ago(it.ts) + '</span></div>' +
         '<div class="t">' + hl(it.t) + '</div>' + whenHTML(it) + '</button>' +
         (isOpen ? '<div class="more-info">' + (it.b ? '<p class="body">' + hl(it.b) + '</p>' : '') +
-          '<div class="links"><a class="go" target="_blank" rel="noopener" data-read="' + esc(it.u) + '" href="' + esc(it.u) + '">채널에서 보기</a></div></div>' : '');
+          '<div class="links"><a class="go" target="_blank" rel="noopener" data-read="' + esc(it.u) + '" href="' + esc(it.u) + '">' + (it.src === "naver" ? '네이버에서 보기' : '채널에서 보기') + '</a></div></div>' : '');
       return '<div class="item">' + h + '</div>';
     }
     var hits = pbHits(it), gift = tab === "gifts";
