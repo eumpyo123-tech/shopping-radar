@@ -23,6 +23,7 @@
   --new: #0d7a48;
   --hyundai: #1d6b55; --lotte: #c4122f; --shinsegae: #8a6a2f; --starfield: #5a3fb0;
   --galleria: #a07a2c; --ak: #1f5fbf;
+  --kakao-bg: #fee500; --kakao-fg: #191600; --naver-bg: #03c75a; --naver-fg: #002a12;
   --f-display: "Black Han Sans", "IBM Plex Sans KR", sans-serif;
   --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color-scheme: light;
@@ -32,12 +33,14 @@
   --accent: #ff8a3d; --accent-soft: #33231a; --chip: #252930; --new: #4cc38a;
   --hyundai: #4fb393; --lotte: #ff5a6e; --shinsegae: #d9b25f; --starfield: #a68cff;
   --galleria: #d8b26a; --ak: #6fa2ff;
+  --kakao-bg: #e8d000; --kakao-fg: #191600; --naver-bg: #05b553; --naver-fg: #00200d;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #111317; --surface: #191c21; --fg: #eceef1; --muted: #a0a7b2; --faint: #6c737e; --line: #2a2f37;
   --accent: #ff8a3d; --accent-soft: #33231a; --chip: #252930; --new: #4cc38a;
   --hyundai: #4fb393; --lotte: #ff5a6e; --shinsegae: #d9b25f; --starfield: #a68cff;
   --galleria: #d8b26a; --ak: #6fa2ff;
+  --kakao-bg: #e8d000; --kakao-fg: #191600; --naver-bg: #05b553; --naver-fg: #00200d;
   color-scheme: dark; }
 
 * { box-sizing: border-box; }
@@ -111,7 +114,8 @@ main { padding-block: 0 48px; }
 .chain { font-weight: 600; color: var(--fg); }
 .side { grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 5px; background: var(--chip); color: var(--muted); white-space: nowrap; }
-.tag.src { flex-shrink: 0; }
+.tag.src { flex-shrink: 0; background: var(--kakao-bg); color: var(--kakao-fg); }
+.tag.src.naver { background: var(--naver-bg); color: var(--naver-fg); }
 .tag.팝업 { background: var(--accent-soft); color: var(--accent); }
 .tag.new { background: none; color: var(--new); padding: 0; }
 .t { font-size: 15px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -392,7 +396,7 @@ h1 { white-space: nowrap; }
       var st = state(it);
       h = '<button class="sum st-' + st + '" data-id="' + esc(it.u) + '" data-read="' + esc(it.u) + '" aria-expanded="' + isOpen + '">' +
         '<div class="where"><span class="dot"></span>' +
-        '<span class="tag src">' + (it.src === "naver" ? '네이버' : '카톡') + '</span>' +
+        '<span class="tag src' + (it.src === "naver" ? ' naver">네이버' : '">카톡') + '</span>' +
         '<span class="b"><span class="chain">' + hl(it.ch) + '</span>' +
         (it.region === "지방" ? ' · 지방' : '') + '</span></div>' +
         '<div class="side"><span class="tag st ' + st + '">' + STATE_LABEL[st] + '</span><span class="sub">' + ago(it.ts) + '</span></div>' +
