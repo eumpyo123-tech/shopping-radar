@@ -262,7 +262,7 @@ h1 { white-space: nowrap; }
   }
   function isNew(it) { return tab === "nike" ? Date.now() - it.ts < DAY : it.new && Date.now() - it.new * 1000 < DAY; }
   function hay(it) {
-    return it._h || (it._h = norm([it.ch, it.t, it.b, it.chain, it.kind, it.rate, it.card,
+    return it._h || (it._h = norm([it.ch, it.t, it.b, it.src === "naver" ? "네이버" : "", it.chain, it.kind, it.rate, it.card,
       (it.pb || []).join(" "), (it.w || []).map(function (x) { return x.n; }).join(" ")].join(" ")));
   }
   // 지점·백화점·종류 이름인지 (전관 행사에서 브랜드 검색어와 구분하려고)
@@ -322,7 +322,12 @@ h1 { white-space: nowrap; }
       p(d.getMonth() + 1) + "." + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function whenHTML(it) {
-    if (tab === "nike") return it.ts ? '<div class="when">게시 ' + stamp(it.ts) + '</div>' : '';
+    if (tab === "nike") {
+      if (!it.ts) return '';
+      // 네이버 소식은 날짜만 알려줘서 시각은 빼고 날짜만
+      if (it.src === "naver") { var d = new Date(it.ts); return '<div class="when">게시 ' + (d.getMonth() + 1) + '.' + d.getDate() + '</div>'; }
+      return '<div class="when">게시 ' + stamp(it.ts) + '</div>';
+    }
     if (it.f) return '<div class="when">발견 ' + stamp(it.f * 1000) + '</div>';
     return '<div class="when">발견 11.01 이전</div>';  // 발견 시각을 기록하기 전부터 있던 글
   }
