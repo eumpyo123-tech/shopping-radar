@@ -575,7 +575,12 @@ h1 { white-space: nowrap; }
   // 내용(data.json)은 GitHub 저장소에서 바로 읽음 (사이트 빌드가 늦거나 실패해도 최신 내용이 보이게)
   var gh = location.hostname.match(/^([^.]+)\.github\.io$/), repo = location.pathname.split("/")[1];
   var DATA_URL = gh && repo ? "https://raw.githubusercontent.com/" + gh[1] + "/" + repo + "/data/data.json" : "data.json";
-  fetch(DATA_URL + "?" + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.json(); })
+  // 1순위: GitHub API (캐시 없이 방금 올린 내용). 시간당 60번 제한이라 막히면 raw 주소(최대 5분 캐시)로
+  var API_URL = gh && repo ? "https://api.github.com/repos/" + gh[1] + "/" + repo + "/contents/data.json?ref=data" : null;
+  function getJSON(url, opt) { return fetch(url, opt).then(function (r) { if (!r.ok) throw 0; return r.json(); }); }
+  (API_URL ? getJSON(API_URL, { cache: "no-store", headers: { Accept: "application/vnd.github.raw+json" } })
+           : Promise.reject(0))
+  .catch(function () { return getJSON(DATA_URL + "?" + Date.now()); })
   .catch(function () { return fetch("data.json?" + Date.now()).then(function (r) { return r.json(); }); })
   .then(function (d) {
     D = d; $("updated").textContent = d.updated.slice(5).replace("-", "/") + " 갱신";
